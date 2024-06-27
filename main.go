@@ -81,9 +81,32 @@ func main() {
 
 	app := fiber.New()
 
-	// Define routes here
+	app.Get("/api/cars", getCars)
+	app.Post("/api/cars", createCar)
+	app.Patch("/api/cars/:id", updateCar)
+	app.Delete("/api/cars/:id", deleteCar)
 
-	log.Fatal(app.Listen(":5000"))
+	app.Get("/api/customers", getCustomers)
+	app.Post("/api/customers", createCustomer)
+	app.Patch("/api/customers/:id", updateCustomer)
+	app.Delete("/api/customers/:id", deleteCustomer)
+
+	app.Get("/api/rentals", getRentals)
+	app.Post("/api/rentals", createRental)
+	app.Patch("/api/rentals/:id", updateRental)
+	app.Delete("/api/rentals/:id", deleteRental)
+
+	// Define routes here
+	port := os.Getenv("PORT")
+	if port == ""{
+		port = "5000"
+	}
+
+	if os.Getenv("ENV") == "production" {
+		app.Static("/", "./client/dist")
+	}
+
+	log.Fatal(app.Listen("0.0.0.0:" + port))
 }
 
 // Get all cars
@@ -116,20 +139,55 @@ func createCar(c *fiber.Ctx) error {
 	return c.Status(201).JSON(car)
 }
 
-// Update a car
+//update car
 func updateCar(c *fiber.Ctx) error {
-	id := c.Params("id")
-	objectID, err := primitive.ObjectIDFromHex(id)
-	if err != nil {
-		return c.Status(400).JSON(fiber.Map{"error": "Invalid car ID"})
-	}
-	update := bson.M{"$set": c.BodyParser(new(Car))}
-	_, err = carCollection.UpdateOne(context.Background(), bson.M{"_id": objectID}, update)
-	if err != nil {
-		return err
-	}
-	return c.Status(200).JSON(fiber.Map{"success": true})
+    id := c.Params("id")
+    objectID, err := primitive.ObjectIDFromHex(id)
+    if err != nil {
+        return c.Status(400).JSON(fiber.Map{"error": "Invalid car ID"})
+    }
+
+    var car Car
+    if err := c.BodyParser(&car); err != nil {
+        return err
+    }
+
+    update := bson.M{}
+    if car.Make != "" {
+        update["make"] = car.Make
+    }
+    if car.Model != "" {
+        update["model"] = car.Model
+    }
+    if car.Year != 0 {
+        update["year"] = car.Year
+    }
+    if car.Type != "" {
+        update["type"] = car.Type
+    }
+    // Check for the presence of the 'available' field in the request body
+    var body map[string]interface{}
+    if err := c.BodyParser(&body); err != nil {
+        return err
+    }
+    if available, ok := body["available"]; ok {
+        update["available"] = available
+    }
+
+    if len(update) == 0 {
+        return c.Status(400).JSON(fiber.Map{"error": "No valid fields to update"})
+    }
+
+    updateSet := bson.M{"$set": update}
+    _, err = carCollection.UpdateOne(context.Background(), bson.M{"_id": objectID}, updateSet)
+    if err != nil {
+        return err
+    }
+    return c.Status(200).JSON(fiber.Map{"success": true})
 }
+
+
+
 
 // Delete a car
 func deleteCar(c *fiber.Ctx) error {
@@ -178,18 +236,43 @@ func createCustomer(c *fiber.Ctx) error {
 
 // Update a customer
 func updateCustomer(c *fiber.Ctx) error {
-	id := c.Params("id")
-	objectID, err := primitive.ObjectIDFromHex(id)
-	if err != nil {
-		return c.Status(400).JSON(fiber.Map{"error": "Invalid customer ID"})
-	}
-	update := bson.M{"$set": c.BodyParser(new(Customer))}
-	_, err = customerCollection.UpdateOne(context.Background(), bson.M{"_id": objectID}, update)
-	if err != nil {
-		return err
-	}
-	return c.Status(200).JSON(fiber.Map{"success": true})
+    id := c.Params("id")
+    objectID, err := primitive.ObjectIDFromHex(id)
+    if err != nil {
+        return c.Status(400).JSON(fiber.Map{"error": "Invalid customer ID"})
+    }
+
+    var customer Customer
+    if err := c.BodyParser(&customer); err != nil {
+        return err
+    }
+
+    update := bson.M{}
+    if customer.Name != "" {
+        update["name"] = customer.Name
+    }
+    if customer.Email != "" {
+        update["email"] = customer.Email
+    }
+    if customer.PhoneNumber != "" {
+        update["phone_number"] = customer.PhoneNumber
+    }
+    if customer.DriversLicense != "" {
+        update["drivers_license"] = customer.DriversLicense
+    }
+
+    if len(update) == 0 {
+        return c.Status(400).JSON(fiber.Map{"error": "No valid fields to update"})
+    }
+
+    updateSet := bson.M{"$set": update}
+    _, err = customerCollection.UpdateOne(context.Background(), bson.M{"_id": objectID}, updateSet)
+    if err != nil {
+        return err
+    }
+    return c.Status(200).JSON(fiber.Map{"success": true})
 }
+
 
 // Delete a customer
 func deleteCustomer(c *fiber.Ctx) error {
@@ -237,17 +320,42 @@ func createRental(c *fiber.Ctx) error {
 
 // Update a rental
 func updateRental(c *fiber.Ctx) error {
-	id := c.Params("id")
-	objectID, err := primitive.ObjectIDFromHex(id)
-	if err != nil {
-		return c.Status(400).JSON(fiber.Map{"error": "Invalid rental ID"})
+    id := c.Params("id")
+    objectID, err := primitive.ObjectIDFromHex(id)
+    if err != nil {
+        return c.Status(400).JSON(fiber.Map{"error": "Invalid rental ID"})
+    }
+
+    var rental Rental
+    if err := c.BodyParser(&rental); err != nil {
+        return err
+    }
+
+    update := bson.M{}
+    if !rental.CarID.IsZero() {
+		update["car_id"] = rental.CarID
 	}
-	update := bson.M{"$set": c.BodyParser(new(Rental))}
-	_, err = rentalCollection.UpdateOne(context.Background(), bson.M{"_id": objectID}, update)
-	if err != nil {
-		return err
+	if !rental.CustomerID.IsZero() {
+		update["customer_id"] = rental.CustomerID
+	}	
+    if rental.RentalStartDate != "" {
+		update["rental_start_date"] = rental.RentalStartDate
 	}
-	return c.Status(200).JSON(fiber.Map{"success": true})
+	
+    if 	rental.RentalEndDate != "" {
+        update["rental_end_date"] = rental.RentalEndDate
+    }
+
+    if len(update) == 0 {
+        return c.Status(400).JSON(fiber.Map{"error": "No valid fields to update"})
+    }
+
+    updateSet := bson.M{"$set": update}
+    _, err = rentalCollection.UpdateOne(context.Background(), bson.M{"_id": objectID}, updateSet)
+    if err != nil {
+        return err
+    }
+    return c.Status(200).JSON(fiber.Map{"success": true})
 }
 
 // Delete a rental
