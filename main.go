@@ -17,7 +17,6 @@ import (
 	
 )
 
-// Car model
 type Car struct {
 	ID        primitive.ObjectID `json:"_id,omitempty" bson:"_id,omitempty"`
 	Make      string             `json:"make"`
@@ -27,7 +26,6 @@ type Car struct {
 	Available bool               `json:"available"`
 }
 
-// Customer model
 type Customer struct {
 	ID            primitive.ObjectID `json:"_id,omitempty" bson:"_id,omitempty"`
 	Name          string             `json:"name"`
@@ -36,7 +34,6 @@ type Customer struct {
 	DriversLicense string            `json:"drivers_license,omitempty"`
 }
 
-// Rental model
 type Rental struct {
 	ID               primitive.ObjectID `json:"_id,omitempty" bson:"_id,omitempty"`
 	CarID            primitive.ObjectID `json:"car_id"`
@@ -96,7 +93,6 @@ func main() {
 	app.Patch("/api/rentals/:id", updateRental)
 	app.Delete("/api/rentals/:id", deleteRental)
 
-	// Define routes here
 	port := os.Getenv("PORT")
 	if port == ""{
 		port = "5000"
@@ -109,7 +105,6 @@ func main() {
 	log.Fatal(app.Listen("0.0.0.0:" + port))
 }
 
-// Get all cars
 func getCars(c *fiber.Ctx) error {
 	var cars []Car
 	cursor, err := carCollection.Find(context.Background(), bson.M{})
@@ -125,7 +120,6 @@ func getCars(c *fiber.Ctx) error {
 	return c.JSON(cars)
 }
 
-// Create a new car
 func createCar(c *fiber.Ctx) error {
 	car := new(Car)
 	if err := c.BodyParser(car); err != nil {
@@ -139,7 +133,6 @@ func createCar(c *fiber.Ctx) error {
 	return c.Status(201).JSON(car)
 }
 
-//update car
 func updateCar(c *fiber.Ctx) error {
     id := c.Params("id")
     objectID, err := primitive.ObjectIDFromHex(id)
@@ -165,7 +158,7 @@ func updateCar(c *fiber.Ctx) error {
     if car.Type != "" {
         update["type"] = car.Type
     }
-    // Check for the presence of the 'available' field in the request body
+    // Check presence of the 'available' field in the request body
     var body map[string]interface{}
     if err := c.BodyParser(&body); err != nil {
         return err
@@ -189,7 +182,6 @@ func updateCar(c *fiber.Ctx) error {
 
 
 
-// Delete a car
 func deleteCar(c *fiber.Ctx) error {
 	id := c.Params("id")
 	objectID, err := primitive.ObjectIDFromHex(id)
@@ -204,7 +196,6 @@ func deleteCar(c *fiber.Ctx) error {
 }
 
 
-// Get all customers
 func getCustomers(c *fiber.Ctx) error {
 	var customers []Customer
 	cursor, err := customerCollection.Find(context.Background(), bson.M{})
@@ -220,7 +211,6 @@ func getCustomers(c *fiber.Ctx) error {
 	return c.JSON(customers)
 }
 
-// Create a new customer
 func createCustomer(c *fiber.Ctx) error {
 	customer := new(Customer)
 	if err := c.BodyParser(customer); err != nil {
@@ -234,7 +224,6 @@ func createCustomer(c *fiber.Ctx) error {
 	return c.Status(201).JSON(customer)
 }
 
-// Update a customer
 func updateCustomer(c *fiber.Ctx) error {
     id := c.Params("id")
     objectID, err := primitive.ObjectIDFromHex(id)
@@ -288,7 +277,6 @@ func deleteCustomer(c *fiber.Ctx) error {
 	return c.Status(200).JSON(fiber.Map{"success": true})
 }
 
-// Get all rentals
 func getRentals(c *fiber.Ctx) error {
 	var rentals []Rental
 	cursor, err := rentalCollection.Find(context.Background(), bson.M{})
@@ -304,7 +292,6 @@ func getRentals(c *fiber.Ctx) error {
 	return c.JSON(rentals)
 }
 
-// Create a new rental
 func createRental(c *fiber.Ctx) error {
 	rental := new(Rental)
 	if err := c.BodyParser(rental); err != nil {
@@ -318,7 +305,6 @@ func createRental(c *fiber.Ctx) error {
 	return c.Status(201).JSON(rental)
 }
 
-// Update a rental
 func updateRental(c *fiber.Ctx) error {
     id := c.Params("id")
     objectID, err := primitive.ObjectIDFromHex(id)
@@ -358,7 +344,6 @@ func updateRental(c *fiber.Ctx) error {
     return c.Status(200).JSON(fiber.Map{"success": true})
 }
 
-// Delete a rental
 func deleteRental(c *fiber.Ctx) error {
 	id := c.Params("id")
 	objectID, err := primitive.ObjectIDFromHex(id)

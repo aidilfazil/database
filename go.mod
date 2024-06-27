@@ -1,4 +1,4 @@
-module github.com/aidilfazil/db
+module github.com/aidilfazil/database
 
 go 1.22.4
 
