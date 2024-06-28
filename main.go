@@ -78,16 +78,20 @@ func main() {
 
 	app := fiber.New()
 
+	app.Get("/api/car/:id", getCarByID)
 	app.Get("/api/cars", getCars)
 	app.Post("/api/cars", createCar)
 	app.Patch("/api/cars/:id", updateCar)
 	app.Delete("/api/cars/:id", deleteCar)
 
+	
+	app.Get("/api/customer/:id", getCustomerByID)
 	app.Get("/api/customers", getCustomers)
 	app.Post("/api/customers", createCustomer)
 	app.Patch("/api/customers/:id", updateCustomer)
 	app.Delete("/api/customers/:id", deleteCustomer)
 
+	app.Get("/api/rental/:id", getRentalByID)
 	app.Get("/api/rentals", getRentals)
 	app.Post("/api/rentals", createRental)
 	app.Patch("/api/rentals/:id", updateRental)
@@ -104,6 +108,26 @@ func main() {
 
 	log.Fatal(app.Listen("0.0.0.0:" + port))
 }
+
+func getCarByID(c *fiber.Ctx) error {
+    id := c.Params("id")
+    objectID, err := primitive.ObjectIDFromHex(id)
+    if err != nil {
+        return c.Status(400).JSON(fiber.Map{"error": "Invalid car ID"})
+    }
+
+    var car Car
+    err = carCollection.FindOne(context.Background(), bson.M{"_id": objectID}).Decode(&car)
+    if err != nil {
+        if err == mongo.ErrNoDocuments {
+            return c.Status(404).JSON(fiber.Map{"error": "Car not found"})
+        }
+        return err
+    }
+
+    return c.JSON(car)
+}
+
 
 func getCars(c *fiber.Ctx) error {
 	var cars []Car
@@ -195,6 +219,25 @@ func deleteCar(c *fiber.Ctx) error {
 	return c.Status(200).JSON(fiber.Map{"success": true})
 }
 
+func getCustomerByID(c *fiber.Ctx) error {
+    id := c.Params("id")
+    objectID, err := primitive.ObjectIDFromHex(id)
+    if err != nil {
+        return c.Status(400).JSON(fiber.Map{"error": "Invalid customer ID"})
+    }
+
+    var customer Customer
+    err = customerCollection.FindOne(context.Background(), bson.M{"_id": objectID}).Decode(&customer)
+    if err != nil {
+        if err == mongo.ErrNoDocuments {
+            return c.Status(404).JSON(fiber.Map{"error": "Customer not found"})
+        }
+        return err
+    }
+
+    return c.JSON(customer)
+}
+
 
 func getCustomers(c *fiber.Ctx) error {
 	var customers []Customer
@@ -263,7 +306,7 @@ func updateCustomer(c *fiber.Ctx) error {
 }
 
 
-// Delete a customer
+
 func deleteCustomer(c *fiber.Ctx) error {
 	id := c.Params("id")
 	objectID, err := primitive.ObjectIDFromHex(id)
@@ -276,6 +319,26 @@ func deleteCustomer(c *fiber.Ctx) error {
 	}
 	return c.Status(200).JSON(fiber.Map{"success": true})
 }
+
+func getRentalByID(c *fiber.Ctx) error {
+    id := c.Params("id")
+    objectID, err := primitive.ObjectIDFromHex(id)
+    if err != nil {
+        return c.Status(400).JSON(fiber.Map{"error": "Invalid rental ID"})
+    }
+
+    var rental Rental
+    err = rentalCollection.FindOne(context.Background(), bson.M{"_id": objectID}).Decode(&rental)
+    if err != nil {
+        if err == mongo.ErrNoDocuments {
+            return c.Status(404).JSON(fiber.Map{"error": "Rental not found"})
+        }
+        return err
+    }
+
+    return c.JSON(rental)
+}
+
 
 func getRentals(c *fiber.Ctx) error {
 	var rentals []Rental
