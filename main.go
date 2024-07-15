@@ -180,16 +180,16 @@ app.Get("/api/rentals/customer/:customerId", getCustomerRentals)
 app.Post("/api/rentals/:rentalId/return", returnCar)
 
 port := os.Getenv("PORT")
-
 if port == "" {
-
 port = "5000"
+}
 
+if os.Getenv("ENV") == "production"{
+    app.Static("/","/client/dist")
 }
 
 
-log.Fatal(app.Listen(":" + port))
-
+log.Fatal(app.Listen("0.0.0.0:" + port))
 }
 
 
